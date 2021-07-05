@@ -4,11 +4,11 @@ require 'active_support/inflector'
 class Song
 
 
-  def self.table_name
+  def self.table_name #finds the table name
     self.to_s.downcase.pluralize
   end
 
-  def self.column_names
+  def self.column_names #returns an array of col names
     DB[:conn].results_as_hash = true
 
     sql = "pragma table_info('#{table_name}')"
@@ -21,11 +21,11 @@ class Song
     column_names.compact
   end
 
-  self.column_names.each do |col_name|
+  self.column_names.each do |col_name| #metaprograms the attr_accessors
     attr_accessor col_name.to_sym
   end
 
-  def initialize(options={})
+  def initialize(options={}) #initialize doesnt explicitly name the arguments
     options.each do |property, value|
       self.send("#{property}=", value)
     end
@@ -37,19 +37,19 @@ class Song
     @id = DB[:conn].execute("SELECT last_insert_rowid() FROM #{table_name_for_insert}")[0][0]
   end
 
-  def table_name_for_insert
+  def table_name_for_insert #allows us to use class method inside a instance method  
     self.class.table_name
   end
 
-  def values_for_insert
+  def values_for_insert 
     values = []
     self.class.column_names.each do |col_name|
       values << "'#{send(col_name)}'" unless send(col_name).nil?
     end
-    values.join(", ")
+    values.join(", ") #have to structure it like SQL
   end
 
-  def col_names_for_insert
+  def col_names_for_insert #removes the id column, then joins them the way you would when writing INSERT statements
     self.class.column_names.delete_if {|col| col == "id"}.join(", ")
   end
 
